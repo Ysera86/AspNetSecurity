@@ -13,30 +13,42 @@ namespace DataProtection.Web.Controllers
     public class ProductsController : Controller
     {
         private readonly ExampleDbContext _context;
+        private readonly IDataProtector _dataProtector;
 
-        public ProductsController(ExampleDbContext context)
+        public ProductsController(ExampleDbContext context, IDataProtectionProvider dataProtectionProvider)
         {
             _context = context;
+            _dataProtector = dataProtectionProvider.CreateProtector("ProductsController");
+            // purpose : dataProtectorları izole ediyor : farklı purposelardan hangisi şifrelerse o şifreyi açar, birbirlerinin şifreledikleini açamazlar.
         }
 
         // GET: Products
         public async Task<IActionResult> Index()
         {
-            var exampleDbContext = _context.Products.Include(p => p.Category);
-            return View(await exampleDbContext.ToListAsync());
+            var products =  await _context.Products.Include(p => p.Category).ToListAsync();
+
+            products.ForEach(x =>
+            {
+                x.EncryptedId =_dataProtector.Protect(x.Id.ToString());
+            });
+
+            return View(products);
         }
 
         // GET: Products/Details/5
-        public async Task<IActionResult> Details(int? id)
+        //public async Task<IActionResult> Details(int? id)
+        public async Task<IActionResult> Details(string id) // şifreledik artık Id değil EncryptedId geliyor
         {
             if (id == null || _context.Products == null)
             {
                 return NotFound();
             }
 
+            var decryptedId = int.Parse(_dataProtector.Unprotect(id));
+
             var product = await _context.Products
                 .Include(p => p.Category)
-                .FirstOrDefaultAsync(m => m.Id == id);
+                .FirstOrDefaultAsync(m => m.Id == decryptedId);
             if (product == null)
             {
                 return NotFound();

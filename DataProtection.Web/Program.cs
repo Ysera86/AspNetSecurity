@@ -13,6 +13,8 @@ builder.Services.AddDbContext<ExampleDbContext>(opts =>
     opts.UseSqlServer(builder.Configuration.GetConnectionString("SqlCon"));
 });
 
+builder.Services.AddDataProtection();
+
 //..
 
 var app = builder.Build();

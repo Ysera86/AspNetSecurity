@@ -3,6 +3,9 @@ güvenlik açýklarý
 saldýrý yöntemleri
 korunmya yöntemleri
 
+
+***DataProtection***
+-----------------------------
 DataProtection > IDataProtector (Protect(), UnProtect()) : ASP.NET Core dahilinde. Eðer bu olmasaydý ayrý bir katman&middleware yazmalýydýk
 TcNoya göre sorguda bunu queryStringe istemeyiz.
 Þifreleyip açmak yolu ile þifrele , þifre aç. 
@@ -13,3 +16,27 @@ TcNoya göre sorguda bunu queryStringe istemeyiz.
 
 
 Scaffold-DbContext "Data Source=(localdb)\MSSQLLocalDB;Initial Catalog=ExampleDb;Integrated Security=True;Connect Timeout=30;Encrypt=False;Trust Server Certificate=False;Application Intent=ReadWrite;Multi Subnet Failover=False" Microsoft.EntityFrameworkCore.SqlServer -OutputDir Models -Tables Products,Categories
+
+Program.cs : 
+builder.Services.AddDataProtection();
+
+Controller : 
+private readonly IDataProtector _dataProtector;
+
+public ProductsController(ExampleDbContext context, IDataProtectionProvider dataProtectionProvider)
+{
+    _context = context;
+    _dataProtector = dataProtectionProvider.CreateProtector("ProductsController");
+    // purpose : dataProtectorlarý izole ediyor : farklý purposelardan hangisi þifrelerse o þifreyi açar, birbirlerinin þifreledikleini açamazlar.
+}
+
+
+Id alaný þifrelenecek ve o þifreli Id alanýný tutmak için EncryptedId alanýný ekledik, onu da db-first yapýp otonatik oluþturulan Product sayfasýna yazmadýk!! her scaffoldda dbye eklenen yeni alanlar gelirken bizim koddan eklediklerimiz kaybolur yoksa! Otmatik oluþan koda zaten dokunulmaz : ProductAddititonal.cs
+
+
+Index: 
+    x.EncryptedId =_dataProtector.Protect(x.Id.ToString());
+Details:
+    var decryptedId = int.Parse(_dataProtector.Unprotect(id));
+
+Viewda da düzenlemeler vs.
