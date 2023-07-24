@@ -1,3 +1,4 @@
+using WhiteListBlackList.Web.Filters;
 using WhiteListBlackList.Web.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -9,6 +10,8 @@ builder.Services.AddControllersWithViews();
 
 builder.Services.Configure<IPList>(builder.Configuration.GetSection("IPList"));
 
+// her req geldiðinde generic olarak verilen sýnýftan (CheckWhiteList) bir nesne öreði al 
+builder.Services.AddScoped<CheckWhiteList>();
 
 //..
 
@@ -27,7 +30,7 @@ if (!app.Environment.IsDevelopment())
 
 
 //IP izinli mi diye baktýðýmýz için tüm diðer  mw lerden önce çalýþmasý gayet mantýklý
-app.UseMiddleware<IPSafeMiddleware>();
+//app.UseMiddleware<IPSafeMiddleware>();
 
 //..
 

@@ -6,14 +6,12 @@ Controller/Method > filter service
 Sabit/belirli IP adreslerinin eriþimine izin vermek ve/veya eriþimleri kýsýtlanabilir.
 
 
-Uygulama seviyesi : Middleware
--------------------------------------
 
 "Whitelist" : ["127.0.0.1","::1"] -> IPV6da gelecek olan localhost tanýmlamasý win10da def V6 kurulu
 	"127.0.0.1" : IPV4 versiyon þuan : 4milyar IP adresi : 16 bitlik olduundan dolayý , IOT ile tükeniyor þuan yakýnda IPV6ya geçilecek  
 	"::1" : IPV6 versyonu, ileride IPV6 olacak ve default olarak bunu kullanýcak  : lar arasý 0 , yazmaya gerek yok, API bunu kullanýyor!
 
-appsettingste eklediðimiz WhiteList okumak için bir class oluþturduk : Middleware: IPList, amaç DI ile okumak ve eriþmek  , isimler appsettings ayarlarý ile uyumlu
+appsettingste eklediðimiz WhiteList okumak için bir class oluþturduk : IPList, amaç DI ile okumak ve eriþmek  , isimler appsettings ayarlarý ile uyumlu
 -->>>> OPP best practise! yoksa programda configuration ile de okunur. 
 
 *Nasýl eþleþtiririm bu appsetings ve class ? 
@@ -23,7 +21,13 @@ appsettingste eklediðimiz WhiteList okumak için bir class oluþturduk : Middlewar
 	ctor DI : IOptions<IPList> ipList  ve   _ipList = ipList.Value;  örnek : Middleware.IPSafeMiddleware
 
 
+
+**Uygulama seviyesi : Middleware**
+-------------------------------------
+
 Bir middleware 'in çalýþabilmesi için- bir classýn middleware olabilmesi için- gelen requestin tüm bilgileriini alabilmek için RequestDelegate ve "Invoke" methodu olur. Programda tanýmlanýr bu middleware ve ondan snr her gelen istekle beraber bunun (middlewarelerin) Invoke methodlarý 1 kere çalýþtýrýlýr.
+
+---> Middleware.IPSafeMiddleware 
 
 Program.cs bu mwye girmesini istiyorum her requeste :  IP izinli mi diye baktýðýmýz için tüm diðer  mw lerden önce çalýþmasý gayet mantýklý
 	app.UseMiddleware<IPSafeMiddleware>();
@@ -32,23 +36,72 @@ Program.cs bu mwye girmesini istiyorum her requeste :  IP izinli mi diye baktýðý
 mw : middleware
 request ----[mw1]-[mw2]-[mw3]-..........-[mwn]------> response
 
-	private readonly RequestDelegate _next; 
+private readonly RequestDelegate _next; 
 
-	// diyelim ki bu mw1
-	public async Task Invoke()
-    {
-		.......
-		sorun varsa
-			httpContext.Response.StatusCode = (int)HttpStatusCode.Forbidden; // uygun olan hangi kod ise 
-                return; // mw2 ye devam etme
-		oksa
-			await _next(httpContext); // mw2ye devam et 
-    }
+// diyelim ki bu mw1
+public async Task Invoke()
+{
+	.......
+	sorun varsa
+		httpContext.Response.StatusCode = (int)HttpStatusCode.Forbidden; // uygun olan hangi kod ise 
+            return; // mw2 ye devam etme
+	oksa
+		await _next(httpContext); // mw2ye devam et 
+}
+
 
 Tüm request ve responselar HttpContext üzerinden gerçekleþiyor (Asp.Net Mvc ve Asp.Netcore Mvc için)
-
 
 --> Ve istek yapýnca  var reqIpAddress = httpContext.Connection.RemoteIpAddress; -> ::1 geldi ve sayfa açýldý. appsetting.WhiteList içinden ::1 silip yeniden denediðimde ise "localhost ana makiesine eriþim reddedildi" ("Access to localhost was denied" : 403:Forbidden) mesajý ile sayfa açýlmadý!
 
 
+
+**Controller/Method > filter service**
+-------------------------------------
+ActionFilterAttribute sýnýfýndan türetiriz, mvc ve mvccore da req gelip methoda girmeden önce, girdikten snr ve ya çýktýktan sonra çalýþsýn vb. diyebilmek için SOLID.O prensibine uygun geliþtirmeler için de kullanýrýz. Method ovveride.
+üstte bahsedilenler :
+	OnActionExecuting
+	OnActionExecutionAsync
+	OnActionExecuted
+
+---> Filters.CheckWhiteList
+
+public override void OnActionExecuting(ActionExecutingContext context)
+{
+    var reqIp = context.HttpContext.Connection.RemoteIpAddress;
+
+    var isWhiteList = _ipList.WhiteList.Where(x => IPAddress.Parse(x).Equals(reqIp)).Any();
+
+    if (!isWhiteList) 
+    {
+        context.Result = new StatusCodeResult((int)HttpStatusCode.Forbidden); // 403
+        return;
+    }
+
+    base.OnActionExecuting(context);
+}
+
+-> Þimdi bu filterý diyelim HomeController.Index üzerinde kullanmak istesem, Index method üzerine [CheckWhiteList] yazamam çnk DI kullanýyor, yani ctorda IPLÝst istiyor bunu nasýl HomeCommtrollerýna geçeyim ki??   Eðer DI gerektirmeyen bir filter olsaydý direk controller ve ya method üzerinde [CheckWhiteList] þeklinde kullanabilirim.
+Madem bu DI kullanýyor o zaman bunu Servis Filter olarak tanýmlicam : Program.cs içinde.
+
+	// her req geldiðinde generic olarak verilen sýnýftan (CheckWhiteList) bir nesne öreði al 
+	builder.Services.AddScoped<CheckWhiteList>();
+
+Bu þekilde artýk endpoint üzerinde  [CheckWhiteList]  þeklinde deðil [ServiceFilter(typeof(CheckWhiteList))] þeklinde kullanýrým. Hem controller hem method seviyesinde ayný þekilde kullanabilirim
+denemek için de middleware olarak eklediðimi kapattým : //app.UseMiddleware<IPSafeMiddleware>();
+
+HomeController : 
+[ServiceFilter(typeof(CheckWhiteList))]
+public IActionResult Privacy()
+{
+    return View();
+}
+
+appsettings.json :
+  "IPList": {
+    "WhiteList": [ "127.0.0.1"]
+  },
+
+  
+--> Ve istek yapýnca  var reqIpAddress = httpContext.Connection.RemoteIpAddress; -> ::1 geldi ve sayfa açýldý. appsetting.WhiteList içinden ::1 silip yeniden denediðimde ise "localhost ana makiesine eriþim reddedildi" ("Access to localhost was denied" : 403:Forbidden) mesajý ile sayfa açýlmadý!
 
