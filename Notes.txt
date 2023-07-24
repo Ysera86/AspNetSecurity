@@ -3,10 +3,18 @@ güvenlik açýklarý
 saldýrý yöntemleri
 korunmya yöntemleri
 
+hassas verilerimizi kurumak amaçlý
+
 
 Türleri : 
 ----------------
-DataProtection : IDataProtector ASP.NET Core dahilinde.
-WhiteList/BlackList IP control
-SecretProtection
+DataProtection : IDataProtector ASP.NET Core dahilinde. 
+	> örn. Id reqStringe eklenmesin Protect() ile encrypt yapýp yollayalým ve geleni Unprotect() ile decrypt yapýp kullanalým.
+WhiteList/BlackList IP control : Uygulama ve Controller/Method seviyesinde yapabiliriz.
+	> Uygulama : middleware
+	> Controller/Method : filter
+SecretProtection : Microsoft Secret Manager tool :  Canlýya deploy edilmemesi gerekenler, prodda bunlar ezilmeli env var ile 
+	> ConnectionString  (web.config, appsettings.json ..)
+	> Token 
+	> Fb, Google, Microsoft ClientId/Client Secret
 CORS

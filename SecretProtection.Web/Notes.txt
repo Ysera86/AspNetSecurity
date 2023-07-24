@@ -1,0 +1,69 @@
+***SecretProtection***
+-----------------------------
+ Microsoft Secret Manager tool 
+ 
+ Canlýya deploy edilmemesi gereken hassas bilgiler, prodda bunlar ezilmeli env var ile 
+	> ConnectionString  (web.config, appsettings.json ..)
+	> Token 
+	> Fb, Google, Microsoft ClientId/Client Secret
+
+projeyi publish edince ve ya githubta public repoya  appsettings.json da dizine gidiyor ve bunu direk prod ortama geçebiliriz, direk güvenlik zaafiyeti.
+
+Microsoft Secret Manager tool  der ki hassas bilgilerini appsettings.jsonda tutma, projeye sað týk > Manage User Secrets > "secrets.json" oluþturur. Bu dosya uygulama root içinde tutulmuyor, tamamen pcmizdeki bir dosyada tutuluyor, projede deðil. uygulamayý development ortamýnda çalýþtýrýnca otomatik olarak arka tarafta bu içerik appsettings.json ile birleþtirilip çalýþtýrýlýyor. Ýçeriði sanki appsettings.json daymýþcasýna geliþtirme yapmaya devam ediyoruz.
+C:\Users\merve\AppData\Roaming\Microsoft\UserSecrets\cf00f1cc-f0d0-4e50-b804-2efac3c0e8b0 içine kaydetmiþ secrets.json ý
+
+secrets.json:
+{
+
+  "ConnectionStrings": {
+    "SqlCon": "Data Source=(localdb)\\MSSQLLocalDB;Initial Catalog=ExampleDb;Integrated Security=True;Connect Timeout=30;Encrypt=False;Trust Server Certificate=False;Application Intent=ReadWrite;Multi Subnet Failover=False"
+  }
+}
+
+Projeye sað týk > Edit project file ile (ya da projeye çift týk) hangi secretýn kullanýldýðýný tuttuðu yer
+	<PropertyGroup>
+	...
+	  <UserSecretsId>cf00f1cc-f0d0-4e50-b804-2efac3c0e8b0</UserSecretsId>
+	</PropertyGroup>
+
+
+Program.cs
+var connectionString = builder.Configuration.GetSection("ConnectionStrings:SqlCon"); // = builder.Configuration["ConnectionStrings:SqlCon"];
+--> ve bilgiyi doðru okudu, ayrýca connectionstring de publishte oluþan dosyaya gitmemiþ oldu appsettings.json içnd eyer almadýðýndan.
+
+
+
+****>>>>>>
+
+Daha da ileri gidip sqlconnectioný passd olmadan appsettingste tutsak ve secrets.jsonda sadece þifre tutsak bu þekilde connectionstringi oluþturabilirdik.
+appsettings.json hassas bilgiler olmadan mesela þifre:
+
+appsettings.json:
+ "ConnectionStrings": {
+    "SqlCon": "Data Source=(localdb)\\MSSQLLocalDB;Initial Catalog=ExampleDb;Integrated Security=True;Connect Timeout=30;Encrypt=False;TrustServerCertificate=False;ApplicationIntent=ReadWrite;MultiSubnetFailover=False"
+  },
+
+
+secrets.json:
+{
+
+  "Passwords": {
+    "SqlPass": "1234"
+  }
+}
+
+Program: (SqlConnectionStringBuilder kullanýnca baðlantý cümlesi biraz deðiþiyor, spaceler siliniyor bazýlarýndaki)
+var sqlBuilder = new SqlConnectionStringBuilder(connectionString);
+sqlBuilder.Password = builder.Configuration["Passwords:SqlPass"];
+string conStr = sqlBuilder.ConnectionString;
+-> þeklinde settings.json daki þifre  appsettings.jsondaki connectionstringe eklenir..
+
+
+
+
+
+########################################################################
+
+Azure'a deploy edilen uygulamaya appsettings zaten gitmiyor, Azure tarafýnda kendi appsettings kýsmýna key-value yazýyoruz.
+
+Docker'a deploy edilen uygulamaya environment deðiþkenler tanýmlanýð veriliyor
