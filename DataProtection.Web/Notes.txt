@@ -27,11 +27,11 @@ public ProductsController(ExampleDbContext context, IDataProtectionProvider data
 {
     _context = context;
     _dataProtector = dataProtectionProvider.CreateProtector("ProductsController");
-    // purpose : dataProtectorlarý izole ediyor : farklý purposelardan hangisi þifrelerse o þifreyi açar, birbirlerinin þifreledikleini açamazlar.
+    // purpose : dataProtectorlarý izole ediyor : farklý purposelardan hangisi þifrelerse o þifreyi açar, birbirlerinin þifrelediklerini açamazlar.
 }
 
 
-Id alaný þifrelenecek ve o þifreli Id alanýný tutmak için EncryptedId alanýný ekledik, onu da db-first yapýp otonatik oluþturulan Product sayfasýna yazmadýk!! her scaffoldda dbye eklenen yeni alanlar gelirken bizim koddan eklediklerimiz kaybolur yoksa! Otmatik oluþan koda zaten dokunulmaz : ProductAddititonal.cs
+Id alaný þifrelenecek ve o þifreli Id alanýný tutmak için EncryptedId alanýný ekledik, onu da db-first yapýp otomatik oluþturulan Product sayfasýna yazmadýk!! her scaffoldda dbye eklenen yeni alanlar gelirken bizim koddan eklediklerimiz kaybolur yoksa! Otomatik oluþan koda zaten dokunulmaz : ProductAddititonal.cs
 
 
 Index: 
@@ -40,3 +40,14 @@ Details:
     var decryptedId = int.Parse(_dataProtector.Unprotect(id));
 
 Viewda da düzenlemeler vs.
+Þifrelenen veriye ömür verme, belli bir süre içinde þifreyi çözebilmek için, sonrasýnda çözülemez (token gibi) : _dataProtector.ToTimeLimitedDataProtector 
+
+   var timeLimitedProtector = _dataProtector.ToTimeLimitedDataProtector();
+
+
+Index: 
+    var timeLimitedProtector = _dataProtector.ToTimeLimitedDataProtector();
+    x.EncryptedId = timeLimitedProtector.Protect(x.Id.ToString(),TimeSpan.FromSeconds(5));
+Details:
+    var timeLimitedProtector = _dataProtector.ToTimeLimitedDataProtector();
+    var decryptedId = int.Parse(timeLimitedProtector.Unprotect(id));

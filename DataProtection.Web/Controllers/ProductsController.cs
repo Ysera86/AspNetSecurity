@@ -19,7 +19,7 @@ namespace DataProtection.Web.Controllers
         {
             _context = context;
             _dataProtector = dataProtectionProvider.CreateProtector("ProductsController");
-            // purpose : dataProtectorları izole ediyor : farklı purposelardan hangisi şifrelerse o şifreyi açar, birbirlerinin şifreledikleini açamazlar.
+            // purpose : dataProtectorları izole ediyor : farklı purposelardan hangisi şifrelerse o şifreyi açar, birbirlerinin şifrelediklerini açamazlar.
         }
 
         // GET: Products
@@ -27,9 +27,13 @@ namespace DataProtection.Web.Controllers
         {
             var products =  await _context.Products.Include(p => p.Category).ToListAsync();
 
+            var timeLimitedProtector = _dataProtector.ToTimeLimitedDataProtector();
+
             products.ForEach(x =>
             {
-                x.EncryptedId =_dataProtector.Protect(x.Id.ToString());
+                //x.EncryptedId =_dataProtector.Protect(x.Id.ToString());
+                // süreli olsun bu alanın şifresini çözme işlemi, 5sn verelim
+                x.EncryptedId = timeLimitedProtector.Protect(x.Id.ToString(),TimeSpan.FromSeconds(5));
             });
 
             return View(products);
@@ -44,7 +48,12 @@ namespace DataProtection.Web.Controllers
                 return NotFound();
             }
 
-            var decryptedId = int.Parse(_dataProtector.Unprotect(id));
+            var timeLimitedProtector = _dataProtector.ToTimeLimitedDataProtector();
+
+            //var decryptedId = int.Parse(_dataProtector.Unprotect(id));
+            // süreli olsun demiştik çözme işlemini de ona göre yapmalıyız
+            var decryptedId = int.Parse(timeLimitedProtector.Unprotect(id));
+            // Eğer indexten 5 snden fazla bir süre snr bir ürün detaylarına girersek cryt patlicak.
 
             var product = await _context.Products
                 .Include(p => p.Category)
