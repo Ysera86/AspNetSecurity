@@ -1,0 +1,54 @@
+***WhiteList/BlackList IP control***
+-----------------------------
+Uygulama seviyesi > middleware
+Controller/Method > filter service
+
+Sabit/belirli IP adreslerinin eriþimine izin vermek ve/veya eriþimleri kýsýtlanabilir.
+
+
+Uygulama seviyesi : Middleware
+-------------------------------------
+
+"Whitelist" : ["127.0.0.1","::1"] -> IPV6da gelecek olan localhost tanýmlamasý win10da def V6 kurulu
+	"127.0.0.1" : IPV4 versiyon þuan : 4milyar IP adresi : 16 bitlik olduundan dolayý , IOT ile tükeniyor þuan yakýnda IPV6ya geçilecek  
+	"::1" : IPV6 versyonu, ileride IPV6 olacak ve default olarak bunu kullanýcak  : lar arasý 0 , yazmaya gerek yok, API bunu kullanýyor!
+
+appsettingste eklediðimiz WhiteList okumak için bir class oluþturduk : Middleware: IPList, amaç DI ile okumak ve eriþmek  , isimler appsettings ayarlarý ile uyumlu
+-->>>> OPP best practise! yoksa programda configuration ile de okunur. 
+
+*Nasýl eþleþtiririm bu appsetings ve class ? 
+ 	builder.Services.Configure<IPList>(builder.Configuration.GetSection("IPList"));
+*Nasýl kullanýrým, deðerleri okurum ? 
+	private field :  private readonly IPList _ipList;
+	ctor DI : IOptions<IPList> ipList  ve   _ipList = ipList.Value;  örnek : Middleware.IPSafeMiddleware
+
+
+Bir middleware 'in çalýþabilmesi için- bir classýn middleware olabilmesi için- gelen requestin tüm bilgileriini alabilmek için RequestDelegate ve "Invoke" methodu olur. Programda tanýmlanýr bu middleware ve ondan snr her gelen istekle beraber bunun (middlewarelerin) Invoke methodlarý 1 kere çalýþtýrýlýr.
+
+Program.cs bu mwye girmesini istiyorum her requeste :  IP izinli mi diye baktýðýmýz için tüm diðer  mw lerden önce çalýþmasý gayet mantýklý
+	app.UseMiddleware<IPSafeMiddleware>();
+	
+
+mw : middleware
+request ----[mw1]-[mw2]-[mw3]-..........-[mwn]------> response
+
+	private readonly RequestDelegate _next; 
+
+	// diyelim ki bu mw1
+	public async Task Invoke()
+    {
+		.......
+		sorun varsa
+			httpContext.Response.StatusCode = (int)HttpStatusCode.Forbidden; // uygun olan hangi kod ise 
+                return; // mw2 ye devam etme
+		oksa
+			await _next(httpContext); // mw2ye devam et 
+    }
+
+Tüm request ve responselar HttpContext üzerinden gerçekleþiyor (Asp.Net Mvc ve Asp.Netcore Mvc için)
+
+
+--> Ve istek yapýnca  var reqIpAddress = httpContext.Connection.RemoteIpAddress; -> ::1 geldi ve sayfa açýldý. appsetting.WhiteList içinden ::1 silip yeniden denediðimde ise "localhost ana makiesine eriþim reddedildi" ("Access to localhost was denied" : 403:Forbidden) mesajý ile sayfa açýlmadý!
+
+
+

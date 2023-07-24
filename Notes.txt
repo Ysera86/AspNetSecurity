@@ -1,0 +1,12 @@
+ASP.Net Core güvenlik
+güvenlik açýklarý 
+saldýrý yöntemleri
+korunmya yöntemleri
+
+
+Türleri : 
+----------------
+DataProtection : IDataProtector ASP.NET Core dahilinde.
+WhiteList/BlackList IP control
+SecretProtection
+CORS

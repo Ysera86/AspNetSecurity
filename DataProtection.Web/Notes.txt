@@ -1,9 +1,3 @@
-ASP.Net Core güvenlik
-güvenlik açýklarý 
-saldýrý yöntemleri
-korunmya yöntemleri
-
-
 ***DataProtection***
 -----------------------------
 DataProtection > IDataProtector (Protect(), UnProtect()) : ASP.NET Core dahilinde. Eðer bu olmasaydý ayrý bir katman&middleware yazmalýydýk
