@@ -1,0 +1,15 @@
+ASP.Net Core güvenlik
+güvenlik açýklarý 
+saldýrý yöntemleri
+korunmya yöntemleri
+
+DataProtection > IDataProtector (Protect(), UnProtect()) : ASP.NET Core dahilinde. Eðer bu olmasaydý ayrý bir katman&middleware yazmalýydýk
+TcNoya göre sorguda bunu queryStringe istemeyiz.
+Þifreleyip açmak yolu ile þifrele , þifre aç. 
+
+örn: Products/Details/26 
+     Products/Details/Cslf83e92wdkfgJksew9ewlK>_LDKSWEIKVFRNW435MJmþdsfýrek4k639823822_sdo
+
+
+
+Scaffold-DbContext "Data Source=(localdb)\MSSQLLocalDB;Initial Catalog=ExampleDb;Integrated Security=True;Connect Timeout=30;Encrypt=False;Trust Server Certificate=False;Application Intent=ReadWrite;Multi Subnet Failover=False" Microsoft.EntityFrameworkCore.SqlServer -OutputDir Models -Tables Products,Categories
