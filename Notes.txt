@@ -108,6 +108,8 @@ CORS_MyWeb.API .Program :
 
 builder.Services.AddCors(opt =>
 {
+    #region Uygulama seviyesinde, Middleware
+
 	opt.AddPolicy("AllowedSites", x =>
     {
         x.WithOrigins("https://localhost:7278", "https://www.mysite.com").AllowAnyHeader().AllowAnyMethod();
@@ -124,6 +126,9 @@ builder.Services.AddCors(opt =>
     {
         x.WithOrigins("https://*.example.com").SetIsOriginAllowedToAllowWildcardSubdomains().AllowAnyHeader().AllowAnyMethod();
     });
+
+     #endregion
+
 });
 
 //..
@@ -148,6 +153,76 @@ response headers >>>> Access-Control-Allow-Origin : https://localhost:7278      
 
 Preview tabý:
 data gelmiþ
+
+
+
+## Controller/Method Seviyesinde : Filter
+
+CORS_MyWeb.API .Program :
+
+builder.Services.AddCors(opt =>
+{
+
+    #region Method seviyesinde, Controller içinde 
+
+    opt.AddPolicy("AllowedSites4", x =>
+    {
+        x.WithOrigins("https://localhost:7278").WithMethods("POST", "GET").AllowAnyHeader();
+    });
+
+    #endregion
+});
+
+//..
+
+//..
+
+app.UseCors();  // Burada belirtmeyiz çnk controller/method seviyeswinde olduðundan orada filter attr olarak belirtilir.
+
+//..
+
+
+CORS_MyWeb.Web .Controller :
+
+## Controller seviyesinde : 
+
+1 - OK
+2 - eklenince CORS hatasý
+
+    [EnableCors("AllowedSites4")] // 1  
+    [ApiController]
+    [Route("[controller]")]
+    public class WeatherForecastController : ControllerBase
+    {
+        [DisableCors] // Controller seviyesinde açýk olan cors bu methodda geçerli olmasýn 
+        [HttpGet(Name = "GetWeatherForecast")]
+        public IEnumerable<WeatherForecast> Get() 
+        {
+            ..........
+        }
+    
+    }
+
+
+
+## Method seviyesinde :
+
+-->> CORS HATASI :  AllowedSites3 : "https://*.example.com" biz  https://localhost:7278 adresinden istek atýyoruz, CORS
+        [EnableCors("AllowedSites3")] 
+        [HttpGet(Name = "GetWeatherForecast")]
+        public IEnumerable<WeatherForecast> Get() 
+        {
+            ..........
+        }
+
+
+-->> OK          
+        [EnableCors("AllowedSites4")] 
+        [HttpGet(Name = "GetWeatherForecast")]
+        public IEnumerable<WeatherForecast> Get() 
+        {
+            ..........
+        }
 
 
 

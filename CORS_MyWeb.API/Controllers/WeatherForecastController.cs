@@ -1,7 +1,9 @@
+using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CORS_MyWeb.API.Controllers
 {
+    [EnableCors("AllowedSites4")] // OK 
     [ApiController]
     [Route("[controller]")]
     public class WeatherForecastController : ControllerBase
@@ -18,6 +20,9 @@ namespace CORS_MyWeb.API.Controllers
             _logger = logger;
         }
 
+        //[EnableCors("AllowedSites3")] // CORS HATASI
+        //[EnableCors("AllowedSites4")] // OK 
+        // [DisableCors] // Controller seviyesinde açýk olan cors bu methodda geçerli olmasýn
         [HttpGet(Name = "GetWeatherForecast")]
         public IEnumerable<WeatherForecast> Get()
         {
