@@ -1,0 +1,16 @@
+Genel Güvenlik Açýklarý , Built-in Gelen Güvenlik Önlemleri, Korunma Yollarý
+
+## Cross Site Scripting (XSS):
+1 - Reflected XSS
+2 - Stored XSS
+
+1 - hacker injects trusted website wihth malicious script 
+2 - victim visits truested website and triggers malicious script
+3 - victim's browser executes malicious script and unknowingly forwards desired information (session token, cookie, etc.) to hacker
+
+sunucu taraflý deðil, web taraflý script saldýrýdýr, htlm- js gibi dillerin güvenlik zaafiyetlerinden yararlanýr, session, cookie gibi  hassas bilgileri -ki genelde cookie çalmak amaçlý. saldýrýlan taraf kullancýdýr.
+Kullancýdan form ile veri alýp, bu veriyi validation yapmadan ekrana yazmak istediðimizde ortaya çýkar.
+Web sitesinde xss güvenlik açýðý varsa saldýrganýn web sitesi içinde istediði scripti (genede js scripti) çalýþtýrabilir ve ya sitenin görünümünü deðiþtirebilir.
+
+
+1  - Reflected XSS : Anlýk saldýrýdýr, en az hasarý verir, scripti çalýþtýrdýðý anda o sayfadaki kullanýcýnýn, yani o anda kimin oturum bilgisi varsa o bilgileri alýr ve ya bir yere yönlendirir
