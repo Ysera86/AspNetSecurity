@@ -16,3 +16,12 @@ Web sitesinde xss güvenlik açýðý varsa saldýrganýn web sitesi içinde istediði sc
 1  - Reflected XSS : Anlýk saldýrýdýr, en az hasarý verir, scripti çalýþtýrdýðý anda o sayfadaki kullanýcýnýn, yani o anda kimin oturum bilgisi varsa o bilgileri alýr ve ya bir yere yönlendirir
 
 2  - Stored XSS : scriptimizin dbye ya da dosyaya yazýlma iþlemi, bu bilgi dbden/dosyadan her okunup da browserda her gösterildiðinde kim gösteriyorsa onu nbilgileri çalýnýr. Yani milyonlarca kiþiye eriþebilir.
+
+--> Normalde cshtml içerisinde @ kullanýnca encoding iþlemi otomatik gerçekliþiyordu. Controller seviyesinde kodda nasýl datalarý encode edebilirim? Asp.Core içerisinde gömülüe encoderlar
+
+## Encoder:
+1 - HtmlEncoder : html scriptleri için
+2 - javaScriptEncoder : js kodlarýný zararsýz hale getirmek için
+3 - UrlEncoder : url 
+
+Bunlarý DI ile enjekte edip kullanýcaz.
