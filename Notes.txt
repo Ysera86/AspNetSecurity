@@ -17,4 +17,147 @@ SecretProtection : Microsoft Secret Manager tool :  Canlýya deploy edilmemesi ge
 	> ConnectionString  (web.config, appsettings.json ..)
 	> Token 
 	> Fb, Google, Microsoft ClientId/Client Secret
-CORS
+CORS : Cross Origin Resource Sharing : Aslýnda güvenlik amaçlý deðil, güvenliðini esnetmek amaçlý.
+	Browserlar varsayýlan olarak baþka bir protocol/host/port eriþimini reddeder (Same-origin policy).
+	ör : http://www.mysite.com -> https://www.mysite.com ->  protocol farklý
+	ör : http://www.mysite.com:4000 -> https://www.mysite.com:4001 ->  port farklý
+
+
+	Aþaðýdaki þekilde, api ye istek yapýyor client, ve apiden gelen response.header içinde No 'Access-Control-Allow-Origin' diye bir key value görürse, browser gitmeyi reddediyor. CORS özelliðini eriþilmeye çalýþýlan yerde belirtiriz.  x domaininden gelen isteklei kabul ederim der API.
+
+
+
+	Request yapan headerýna  Origin:https://www.example.com ekler, istek yapan bu adres (ben buyum) der.
+	1 - Request yapýlan headerýna  No 'Access-Control-Allow-Origin' eklerse, req yapan baðlanmayý reddeder.
+	2 - Request yapýlan headerýna Access-Control-Allow-Origin:https://www.example.com eklerse, req yapan kendi headerýna bakar ve allow edilen originleri kedikisi ile karþýlaþtýrýr, eþleþen bulursa baðlanýr.
+
+
+
+		|-----------|		                   	     		request                                          |----------------------|
+		|	webapp  |	                   	   --------------------------------->                            |   Asp.Net Core API   |
+		|		    |	                   	    Origin:https://www.example.com                               |                      |
+		|	angular |	                   	                                                                 |                      |
+		|	react   |	                   	                response                                         |                      |
+		|	vue.js  |		                   <---------------------------------                            |                      |
+		|-----------|                           No 'Access-Control-Allow-Origin'                             |----------------------|
+	https://www.example.com            Access-Control-Allow-Origin:https://www.example.com                    https://api.example.com
+
+
+---->>
+
+## Uygulama Seviyesinde : Middleware
+
+CORS_MyWeb.API : Weatherforecast
+CORS_MYWeb.Web : _Layout.cshtml içine APIdan data çeken kodu ekledik ve web projesini çalýþtýrdýk. CORS hatasý aldýk.
+
+@* Ekledik *@
+    <script type="text/javascript">
+        fetch("https://localhost:7267/WeatherForecast").then(data => {
+            console.log(data)
+        })
+    </script>
+    
+@* Ekledik *@
+
+CORS Hatasý : Access to fetch at 'https://localhost:7267/WeatherForecast' from origin 'https://localhost:7278' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. If an opaque response serves your needs, set the request's mode to 'no-cors' to fetch the resource with CORS disabled.
+
+
+
+CORS aktif etme  : 
+
+1 - tüm domainlerden gelen istekleri kabul et 
+
+CORS_MyWeb.API .Program :
+
+//..tüm domainlerden gelen istekleri kabul et
+
+builder.Services.AddCors(opt =>
+{
+    opt.AddDefaultPolicy(x =>
+    {
+		// gelen tüm istekleri kabul et
+        x.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod();
+    });
+});
+
+//..
+
+//..
+
+app.UseCors();
+
+//..
+
+Artýk hata almadan sonucu alabiliyoruz.
+
+
+CORS_MYWeb.Web. incele > Network tabý > WeatherForecast
+
+Headers tabý:
+request headers >>> Origin : https://localhost:7278
+response headers >>>> Access-Control-Allow-Origin : *       -->> tüm domainlerden gelen istekleri kabul et
+
+Preview tabý:
+data gelmiþ
+
+
+
+2 - Belli domaninlerden gelen istekleri kabul et
+
+CORS_MyWeb.API .Program :
+
+builder.Services.AddCors(opt =>
+{
+	opt.AddPolicy("AllowedSites", x =>
+    {
+        x.WithOrigins("https://localhost:7278", "https://www.mysite.com").AllowAnyHeader().AllowAnyMethod();
+    });
+
+    // belli headera göre
+    opt.AddPolicy("AllowedSites2", x =>
+    {
+        x.WithOrigins("https://www.mysite2.com").WithHeaders(HeaderNames.ContentType, "x-custom-header").AllowAnyMethod();
+    });
+
+    // subdomainleri kabul et :  hhttps://api.example.com, https://mobile.example.com etc
+    opt.AddPolicy("AllowedSites3", x =>
+    {
+        x.WithOrigins("https://*.example.com").SetIsOriginAllowedToAllowWildcardSubdomains().AllowAnyHeader().AllowAnyMethod();
+    });
+});
+
+//..
+
+//..
+
+app.UseCors("AllowedSites");
+app.UseCors("AllowedSites2");
+app.UseCors("AllowedSites3");
+
+//..
+
+
+Artýk hata almadan sonucu alabiliyoruz.
+
+
+CORS_MYWeb.Web. incele > Network tabý > WeatherForecast
+
+Headers tabý:
+request headers >>> Origin : https://localhost:7278
+response headers >>>> Access-Control-Allow-Origin : https://localhost:7278       -->> https://localhost:7278 gelen istekleri kabul et
+
+Preview tabý:
+data gelmiþ
+
+
+
+
+
+
+
+
+
+
+x.WithOrigins("https://localhost:7279", "https://www.mysite.com").AllowAnyHeader().AllowAnyMethod(); -> X
+
+x.WithOrigins("https://localhost:7278", "https://www.mysite.com").AllowAnyHeader().AllowAnyMethod();  -> Access-Control-Allow-Origin:https://localhost:7278
