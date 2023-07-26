@@ -9,7 +9,8 @@
 
 projeyi publish edince ve ya githubta public repoya  appsettings.json da dizine gidiyor ve bunu direk prod ortama geçebiliriz, direk güvenlik zaafiyeti.
 
-Microsoft Secret Manager tool  der ki hassas bilgilerini appsettings.jsonda tutma, projeye sað týk > Manage User Secrets > "secrets.json" oluþturur. Bu dosya uygulama root içinde tutulmuyor, tamamen pcmizdeki bir dosyada tutuluyor, projede deðil. uygulamayý development ortamýnda çalýþtýrýnca otomatik olarak arka tarafta bu içerik appsettings.json ile birleþtirilip çalýþtýrýlýyor. Ýçeriði sanki appsettings.json daymýþcasýna geliþtirme yapmaya devam ediyoruz.
+Microsoft Secret Manager tool  der ki hassas bilgilerini appsettings.jsonda tutma, projeye sað týk > Manage User Secrets > "secrets.json" oluþturur. Bu dosya uygulama root içinde tutulmuyor, tamamen pcmizdeki bir dosyada tutuluyor, projede deðil. 
+Uygulamayý sadece "Development" ortamda çalýþtýrýnca otomatik olarak arka tarafta bu içerik appsettings.json ile birleþtirilip çalýþtýrýlýyor. Ýçeriði sanki appsettings.json daymýþcasýna geliþtirme yapmaya devam ediyoruz.
 C:\Users\merve\AppData\Roaming\Microsoft\UserSecrets\cf00f1cc-f0d0-4e50-b804-2efac3c0e8b0 içine kaydetmiþ secrets.json ý
 
 secrets.json:
